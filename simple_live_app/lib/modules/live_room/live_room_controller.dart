@@ -115,9 +115,14 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
         } else {
           Log.d("Failed to enable PIP via platform channel or no result.");
         }
-      } on PlatformException catch (e) {
-        Log.e("Failed to enable PIP: '${e.message}'.", e.stackTrace ?? StackTrace.empty);
-        SmartDialog.showToast("无法启动画中画: ${e.message}");
+      } catch (e, s) { // Catch both exception and stack trace
+        if (e is PlatformException) {
+          Log.e("Failed to enable PIP: '${e.message}'.", s);
+          SmartDialog.showToast("无法启动画中画: ${e.message}");
+        } else {
+          Log.e("An unexpected error occurred in enableIosPip: '${e.toString()}'.", s);
+          SmartDialog.showToast("启动画中画时发生未知错误");
+        }
       }
     } else {
       Log.d("enableIosPip called on non-iOS platform.");
@@ -129,8 +134,12 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
       try {
         await _pipChannel.invokeMethod('disablePip');
         Log.d("PIP disable called via platform channel.");
-      } on PlatformException catch (e) {
-        Log.e("Failed to disable PIP: '${e.message}'.", e.stackTrace ?? StackTrace.empty);
+      } catch (e, s) { // Catch both exception and stack trace
+        if (e is PlatformException) {
+          Log.e("Failed to disable PIP: '${e.message}'.", s);
+        } else {
+          Log.e("An unexpected error occurred in disableIosPip: '${e.toString()}'.", s);
+        }
       }
     }
   }
