@@ -838,6 +838,18 @@ class LiveRoomPage extends GetView<LiveRoomController> {
                 },
               ),
             ),
+          Visibility(
+            visible: Platform.isIOS,
+            child: ListTile(
+              leading: const Icon(Icons.picture_in_picture_alt_outlined), // Using a slightly different icon for distinction
+              title: const Text("iOS 小窗播放"), // iOS Small Window Play
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Get.back(); // Close the bottom sheet
+                controller.enableIosPip(); // Call the new iOS PIP method
+              },
+            ),
+          ),
             ListTile(
               leading: const Icon(Icons.timer_outlined),
               title: const Text("定时关闭"),

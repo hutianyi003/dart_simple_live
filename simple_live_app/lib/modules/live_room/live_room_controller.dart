@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/services.dart';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -102,6 +103,37 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
   /// 直播间加载失败
   var loadError = false.obs;
   Error? error;
+
+  static const MethodChannel _pipChannel = MethodChannel('com.example.simple_live_app/pip');
+
+  Future<void> enableIosPip() async {
+    if (Platform.isIOS) {
+      try {
+        final bool? result = await _pipChannel.invokeMethod('enablePip');
+        if (result == true) {
+          Log.d("PIP enabled successfully via platform channel.");
+        } else {
+          Log.d("Failed to enable PIP via platform channel or no result.");
+        }
+      } on PlatformException catch (e) {
+        Log.e("Failed to enable PIP: '${e.message}'.");
+        SmartDialog.showToast("无法启动画中画: ${e.message}");
+      }
+    } else {
+      Log.d("enableIosPip called on non-iOS platform.");
+    }
+  }
+
+  Future<void> disableIosPip() async {
+    if (Platform.isIOS) {
+      try {
+        await _pipChannel.invokeMethod('disablePip');
+        Log.d("PIP disable called via platform channel.");
+      } on PlatformException catch (e) {
+        Log.e("Failed to disable PIP: '${e.message}'.");
+      }
+    }
+  }
 
   @override
   void onInit() {
