@@ -116,7 +116,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
           Log.d("Failed to enable PIP via platform channel or no result.");
         }
       } on PlatformException catch (e) {
-        Log.e("Failed to enable PIP: '${e.message}'.");
+        Log.e("Failed to enable PIP: '${e.message}'.", e.stackTrace ?? StackTrace.empty);
         SmartDialog.showToast("无法启动画中画: ${e.message}");
       }
     } else {
@@ -130,7 +130,7 @@ class LiveRoomController extends PlayerController with WidgetsBindingObserver {
         await _pipChannel.invokeMethod('disablePip');
         Log.d("PIP disable called via platform channel.");
       } on PlatformException catch (e) {
-        Log.e("Failed to disable PIP: '${e.message}'.");
+        Log.e("Failed to disable PIP: '${e.message}'.", e.stackTrace ?? StackTrace.empty);
       }
     }
   }
