@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:simple_live_app/pip/ios_pip.dart';
 import 'package:flutter_smart_dialog/flutter_smart_dialog.dart';
 import 'package:get/get.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -411,6 +412,15 @@ mixin PlayerSystemMixin on PlayerMixin, PlayerStateMixin, PlayerDanmakuMixin {
   bool danmakuStateBeforePIP = false;
 
   Future enablePIP() async {
+    if (Platform.isIOS) {
+      final iosPip = IosPip();
+      if (await iosPip.isPipAvailable() == false) {
+        SmartDialog.showToast("设备不支持小窗播放");
+        return;
+      }
+      await iosPip.enable();
+      return;
+    }
     if (!Platform.isAndroid) {
       return;
     }
