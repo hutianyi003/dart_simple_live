@@ -7,11 +7,16 @@ class PipManager: NSObject, AVPictureInPictureControllerDelegate {
     var pipController: AVPictureInPictureController?
     var playerLayer: AVPlayerLayer?
 
-    // Removed init() and testPlayer/testPlayerLayer properties
+    override init() {
+        super.init()
+        // Initial setup if any (currently none beyond properties)
+    }
 
     func setupPipController(with playerLayer: AVPlayerLayer) {
         if AVPictureInPictureController.isPictureInPictureSupported() {
-            self.playerLayer = playerLayer // Ensure playerLayer is assigned
+            self.playerLayer = playerLayer
+            // Ensure playerLayer has a player and it's ready if possible, or check before starting PIP.
+            // For now, we just assign it.
             self.pipController = AVPictureInPictureController(playerLayer: playerLayer)
             self.pipController?.delegate = self
             print("PIP Controller is set up with provided playerLayer.")
@@ -31,18 +36,21 @@ class PipManager: NSObject, AVPictureInPictureControllerDelegate {
             return
         }
 
-        // Ensure the player associated with the layer is playing and has a valid item.
-        // media_kit should handle playback state. This is a safeguard.
-        if playerLayer.player?.currentItem == nil {
+        guard let player = playerLayer.player else {
+            print("PlayerLayer has no associated player. Cannot start PIP.")
+            return
+        }
+
+        guard player.currentItem != nil else {
             print("Player has no current item. Cannot start PIP.")
             return
         }
         
-        // The player should be playing for PIP to start.
-        // We assume media_kit handles the play state.
-        // If playerLayer.player?.rate == 0 {
-        //    playerLayer.player?.play() // Or signal Flutter to play
-        //    print("Player was paused. Attempting to play to enable PIP.")
+        // It's good practice to ensure the player is playing or at least not at rate 0.
+        // However, forcing play here might interfere with media_kit's state management.
+        // Rely on media_kit to manage playback state.
+        // if player.rate == 0 {
+        //    print("Player rate is 0. PIP might not start unless video is playing.")
         // }
 
         if pipController.isPictureInPicturePossible {
@@ -52,18 +60,21 @@ class PipManager: NSObject, AVPictureInPictureControllerDelegate {
             }
         } else {
             print("PIP is not possible at this moment.")
-            // Log reasons why it might not be possible
-            if playerLayer.player?.currentItem?.status != .readyToPlay {
-                print("Player item not ready to play.")
+            if player.currentItem?.status != .readyToPlay {
+                print("Player item not ready to play. Status: \(String(describing: player.currentItem?.status.rawValue))")
+            }
+             if player.error != nil {
+                print("Player error: \(player.error!.localizedDescription)")
             }
             if pipController.isPictureInPictureActive {
                 print("PIP is already active.")
             }
             // Add more diagnostics if needed
+            if CMTimeGetSeconds(player.currentTime()) == 0 && CMTimeGetSeconds(player.currentItem?.duration ?? .zero) == 0 {
+                 print("Player current time and duration are zero, video might not be loaded/playing.")
+            }
         }
     }
-
-    // Removed startPipTest()
 
     func stopPip() {
         if let pipController = self.pipController, pipController.isPictureInPictureActive {
@@ -75,13 +86,23 @@ class PipManager: NSObject, AVPictureInPictureControllerDelegate {
     // MARK: - AVPictureInPictureControllerDelegate
     func pictureInPictureControllerDidStartPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
         print("PIP Did Start")
+        // You might want to notify Flutter here
     }
 
     func pictureInPictureControllerDidStopPictureInPicture(_ pictureInPictureController: AVPictureInPictureController) {
         print("PIP Did Stop")
+        // You might want to notify Flutter here
     }
 
     func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, failedToStartPictureInPictureWithError error: Error) {
         print("PIP Failed to start: \(error.localizedDescription)")
+        // You might want to notify Flutter here
+    }
+
+    func pictureInPictureController(_ pictureInPictureController: AVPictureInPictureController, restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void) {
+        // This is called when PIP is stopped and the app needs to restore its UI.
+        // You might need to tell Flutter to navigate back to the video player screen if it's not already visible.
+        print("PIP Restore UI for stop.")
+        completionHandler(true) // Call completion handler, true if UI restored.
     }
 }
